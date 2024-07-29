@@ -10,7 +10,10 @@ public class Test {
         System.out.println(Math.round(1.5));
         System.out.println(Math.round(1.7));
         System.out.println((int) 1.3);
+        System.out.println((int) -1.3);
         System.out.println((int) 1.5);
+        System.out.println((int) -1.5);
         System.out.println((int) 1.7);
+        System.out.println((int) -1.7);
     }
 }
