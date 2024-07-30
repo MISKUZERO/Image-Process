@@ -43,37 +43,31 @@ public class ImgScale {
         return descBuffImg;
     }
 
-    public static BufferedImage _biLinearInterpolation(BufferedImage originalImage, int newWidth, int newHeight) {
-        int width = originalImage.getWidth();
-        int height = originalImage.getHeight();
-        BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, originalImage.getType());
-        for (int y = 0; y != newHeight; y++) {
-            for (int x = 0; x != newWidth; x++) {
-                double sx = (double) x / newWidth * width;
-                double sy = (double) y / newHeight * height;
-                resizedImage.setRGB(x, y, interpolateColor(sx, sy, originalImage, width, height));
+    public static BufferedImage fastBLI(BufferedImage srcImage, int w, int h) {
+        BufferedImage descBuffImg = new BufferedImage(w, h, srcImage.getType());
+        int _w = srcImage.getWidth(null), _h = srcImage.getHeight(null);
+        double _wScale = (double) _w / w, _hScale = (double) _h / h;
+        for (int y = 0; y != h; y++) {
+            double _y = y * _hScale;
+            int y1 = (int) _y, y2;
+            if ((y2 = y1 + 1) == _h) break;
+            for (int x = 0; x != w; x++) {
+                double _x = x * _wScale;
+                int x1 = (int) _x, x2;
+                if ((x2 = x1 + 1) == _w) break;
+                int c1 = srcImage.getRGB(x1, y1), a1 = c1 >>> 24, r1 = (c1 >>> 16) & 0xFF, g1 = (c1 >>> 8) & 0xFF, b1 = c1 & 0xFF;
+                int c2 = srcImage.getRGB(x2, y1), a2 = c2 >>> 24, r2 = (c2 >>> 16) & 0xFF, g2 = (c2 >>> 8) & 0xFF, b2 = c2 & 0xFF;
+                int c3 = srcImage.getRGB(x1, y2), a3 = c3 >>> 24, r3 = (c3 >>> 16) & 0xFF, g3 = (c3 >>> 8) & 0xFF, b3 = c3 & 0xFF;
+                int c4 = srcImage.getRGB(x2, y2), a4 = c4 >>> 24, r4 = (c4 >>> 16) & 0xFF, g4 = (c4 >>> 8) & 0xFF, b4 = c4 & 0xFF;
+                double dx1 = _x - x1, dx2 = x2 - _x, dy1 = _y - y1, dy2 = y2 - _y;
+                descBuffImg.setRGB(x, y,
+                        ((int) (dy2 * (dx1 * a2 + dx2 * a1) + dy1 * (dx1 * a4 + dx2 * a3)) << 24) |
+                                ((int) (dy2 * (dx1 * r2 + dx2 * r1) + dy1 * (dx1 * r4 + dx2 * r3)) << 16) |
+                                ((int) (dy2 * (dx1 * g2 + dx2 * g1) + dy1 * (dx1 * g4 + dx2 * g3)) << 8) |
+                                (int) (dy2 * (dx1 * b2 + dx2 * b1) + dy1 * (dx1 * b4 + dx2 * b3)));
             }
         }
-        return resizedImage;
-    }
-
-    private static int interpolateColor(double sx, double sy, BufferedImage image, int width, int height) {
-        int x0 = (int) sx, y0 = (int) sy;
-        int x1 = Math.min(x0 + 1, width - 1), y1 = Math.min(y0 + 1, height - 1);
-
-        double dx = sx - x0;
-        double dy = sy - y0;
-
-        int c0 = image.getRGB(x0, y0), r0 = (c0 >> 16) & 0xFF, g0 = (c0 >> 8) & 0xFF, b0 = c0 & 0xFF;
-        int c1 = image.getRGB(x1, y0), r1 = (c1 >> 16) & 0xFF, g1 = (c1 >> 8) & 0xFF, b1 = c1 & 0xFF;
-        int c2 = image.getRGB(x0, y1), r2 = (c2 >> 16) & 0xFF, g2 = (c2 >> 8) & 0xFF, b2 = c2 & 0xFF;
-        int c3 = image.getRGB(x1, y1), r3 = (c3 >> 16) & 0xFF, g3 = (c3 >> 8) & 0xFF, b3 = c3 & 0xFF;
-
-        int tr = (int) ((1 - dx) * ((1 - dy) * r0 + dy * r2) + dx * ((1 - dy) * r1 + dy * r3));
-        int tg = (int) ((1 - dx) * ((1 - dy) * g0 + dy * g2) + dx * ((1 - dy) * g1 + dy * g3));
-        int tb = (int) ((1 - dx) * ((1 - dy) * b0 + dy * b2) + dx * ((1 - dy) * b1 + dy * b3));
-
-        return A_MASK + (tr << 16) + (tg << 8) + tb;
+        return descBuffImg;
     }
 
     public static BufferedImage biLinearInterpolation(BufferedImage srcImage, int w, int h) {
