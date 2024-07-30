@@ -15,14 +15,16 @@ public class ImgScale {
 
     public static BufferedImage castNNI(BufferedImage srcImage, int w, int h) {
         BufferedImage descBuffImg = new BufferedImage(w, h, srcImage.getType());
-        int _w = srcImage.getWidth(null), _h = srcImage.getHeight(null);
-        double _wScale = (double) _w / w, _hScale = (double) _h / h;
-        for (int y = 0; y != h; y++)
+        final double _wScale = (double) srcImage.getWidth(null) / w, _hScale = (double) srcImage.getHeight(null) / h;
+        for (int y = 0; y != h; y++) {
+            int _y = (int) (y * _hScale);
             for (int x = 0; x != w; x++)
                 //计算目标图片像素坐标在原图中的坐标
-                descBuffImg.setRGB(x, y, srcImage.getRGB((int) (x * _wScale), (int) (y * _hScale)));
+                descBuffImg.setRGB(x, y, srcImage.getRGB((int) (x * _wScale), _y));
+        }
         return descBuffImg;
     }
+
 
     @Deprecated
     public static BufferedImage roundNNI(BufferedImage srcImage, int w, int h) {

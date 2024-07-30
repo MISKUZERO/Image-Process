@@ -41,9 +41,9 @@ public class ImgGUI {
                 int w = (int) (scale * image.getWidth(null)), h = (int) (scale * image.getHeight(null));
                 if (w != 0 && h != 0) {
                     super.paintComponent(g); // 调用父类方法以确保背景正确绘制
-                    BufferedImage _image = ImgGUI.this.buffImage = ImgScale.fastBLI(image, w, h);
+                    BufferedImage _image = ImgGUI.this.buffImage = ImgScale.biLinearInterpolation(image, w, h);
                     g.drawImage(_image, dX, dY, null);
-                    g.drawImage(ImgScale.biLinearInterpolation(image, w, h), dX + 1 + _image.getWidth(), dY, null);
+                    g.drawImage(ImgScale.castNNI(image, w, h), dX + 1 + _image.getWidth(), dY, null);
                 }
             }
         };
