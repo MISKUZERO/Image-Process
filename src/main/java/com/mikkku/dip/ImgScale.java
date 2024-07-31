@@ -13,12 +13,13 @@ public class ImgScale {
     public static final int G_MASK = 0x0000ff00;
     public static final int B_MASK = 0x000000ff;
 
-    public static BufferedImage castNNI(BufferedImage srcImage, int w, int h) {
-        BufferedImage descBuffImg = new BufferedImage(w, h, srcImage.getType());
+    public static BufferedImage castNNI(BufferedImage srcImage, int w, int h, int limW, int limH) {
+        int wb = Math.min(w, limW), hb = Math.min(h, limH);
+        BufferedImage descBuffImg = new BufferedImage(wb, hb, srcImage.getType());
         final double _wScale = (double) srcImage.getWidth(null) / w, _hScale = (double) srcImage.getHeight(null) / h;
-        for (int y = 0; y != h; y++) {
+        for (int y = 0; y != hb; y++) {
             int _y = (int) (y * _hScale);
-            for (int x = 0; x != w; x++)
+            for (int x = 0; x != wb; x++)
                 //计算目标图片像素坐标在原图中的坐标
                 descBuffImg.setRGB(x, y, srcImage.getRGB((int) (x * _wScale), _y));
         }
@@ -72,15 +73,16 @@ public class ImgScale {
         return descBuffImg;
     }
 
-    public static BufferedImage biLinearInterpolation(BufferedImage srcImage, int w, int h) {
-        BufferedImage descBuffImg = new BufferedImage(w, h, srcImage.getType());
+    public static BufferedImage biLinearInterpolation(BufferedImage srcImage, int w, int h, int limW, int limH) {
+        int wb = Math.min(w, limW), hb = Math.min(h, limH);
+        BufferedImage descBuffImg = new BufferedImage(wb, hb, srcImage.getType());
         int _w = srcImage.getWidth(null), _h = srcImage.getHeight(null);
         double _wScale = (double) _w / w, _hScale = (double) _h / h;
-        for (int y = 0; y != h; y++) {
+        for (int y = 0; y != hb; y++) {
             double _y = y * _hScale;
             int y1 = (int) _y, y2 = y1 + 1;
             if (y2 == _h) y2 = y1;
-            for (int x = 0; x != w; x++) {
+            for (int x = 0; x != wb; x++) {
                 double _x = x * _wScale;
                 int x1 = (int) _x, x2 = x1 + 1;
                 if (x2 == _w) x2 = x1;
