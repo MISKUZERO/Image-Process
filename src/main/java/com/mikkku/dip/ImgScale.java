@@ -14,7 +14,7 @@ public class ImgScale {
     public static final int B_MASK = 0x000000ff;
 
     public static BufferedImage castNNI(BufferedImage srcImage, int w, int h, int limW, int limH) {
-        int wb = Math.min(w, limW), hb = Math.min(h, limH);
+        int wb = Math.min(limW, w), hb = Math.min(limH, h);
         BufferedImage descBuffImg = new BufferedImage(wb, hb, srcImage.getType());
         final double _wScale = (double) srcImage.getWidth(null) / w, _hScale = (double) srcImage.getHeight(null) / h;
         for (int y = 0; y != hb; y++) {
@@ -46,15 +46,16 @@ public class ImgScale {
         return descBuffImg;
     }
 
-    public static BufferedImage fastBLI(BufferedImage srcImage, int w, int h) {
-        BufferedImage descBuffImg = new BufferedImage(w, h, srcImage.getType());
+    public static BufferedImage fastBLI(BufferedImage srcImage, int w, int h, int limW, int limH) {
+        int wb = Math.min(limW, w), hb = Math.min(limH, h);
+        BufferedImage descBuffImg = new BufferedImage(wb, hb, srcImage.getType());
         int _w = srcImage.getWidth(null), _h = srcImage.getHeight(null);
         double _wScale = (double) _w / w, _hScale = (double) _h / h;
-        for (int y = 0; y != h; y++) {
+        for (int y = 0; y != hb; y++) {
             double _y = y * _hScale;
             int y1 = (int) _y, y2;
             if ((y2 = y1 + 1) == _h) break;
-            for (int x = 0; x != w; x++) {
+            for (int x = 0; x != wb; x++) {
                 double _x = x * _wScale;
                 int x1 = (int) _x, x2;
                 if ((x2 = x1 + 1) == _w) break;
@@ -74,7 +75,7 @@ public class ImgScale {
     }
 
     public static BufferedImage biLinearInterpolation(BufferedImage srcImage, int w, int h, int limW, int limH) {
-        int wb = Math.min(w, limW), hb = Math.min(h, limH);
+        int wb = Math.min(limW, w), hb = Math.min(limH, h);
         BufferedImage descBuffImg = new BufferedImage(wb, hb, srcImage.getType());
         int _w = srcImage.getWidth(null), _h = srcImage.getHeight(null);
         double _wScale = (double) _w / w, _hScale = (double) _h / h;
