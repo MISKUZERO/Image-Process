@@ -21,11 +21,13 @@ public class ImgGUI {
     private final JPanel panel;
     private final FileDialog fileDialog;
     private final MouseAdapter mouseAdapter;
-    private BufferedImage image;
-    private BufferedImage buffImage;
+    private BufferedImage orgImg;
+    private BufferedImage buffImg;
+    private BufferedImage buffImg1;
     private double scale;
-    private int dX;
-    private int dY;
+    private double preScale;
+    private int x;
+    private int y;
     private static final double MIN_SCALE = 0.01;
     private static final double MAX_SCALE = 64;
     private static final double SCALE_STEP = 1.05;
@@ -35,15 +37,24 @@ public class ImgGUI {
         panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
-                BufferedImage image = ImgGUI.this.image;
-                if (image == null)
+                BufferedImage orgImg = ImgGUI.this.orgImg;
+                if (orgImg == null)
                     return;
-                int w = (int) (scale * image.getWidth(null)), h = (int) (scale * image.getHeight(null));
+                super.paintComponent(g); // 调用父类方法以确保背景正确绘制
+                double scale = ImgGUI.this.scale;
+                if (scale == preScale) {
+                    BufferedImage bImg = buffImg;
+                    g.drawImage(bImg, x, y, null);
+                    g.drawImage(buffImg1, x + 1 + bImg.getWidth(), y, null);
+                    return;
+                }
+                preScale = scale;
+                int w = (int) (scale * orgImg.getWidth(null)), h = (int) (scale * orgImg.getHeight(null));
                 if (w != 0 && h != 0) {
-                    super.paintComponent(g); // 调用父类方法以确保背景正确绘制
-                    BufferedImage _image = ImgGUI.this.buffImage = ImgScale.biLinearInterpolation(image, w, h, 500, 500);
-                    g.drawImage(_image, dX, dY, null);
-                    g.drawImage(ImgScale.castNNI(image, w, h, 500, 500), dX + 1 + _image.getWidth(), dY, null);
+                    BufferedImage bImg = ImgGUI.this.buffImg = ImgScale.biLinearInterpolation(orgImg, w, h, 500, 500);
+                    BufferedImage cImg = ImgGUI.this.buffImg1 = ImgScale.castNNI(orgImg, w, h, 500, 500);
+                    g.drawImage(bImg, x, y, null);
+                    g.drawImage(cImg, x + 1 + bImg.getWidth(), y, null);
                 }
             }
         };
@@ -75,8 +86,8 @@ public class ImgGUI {
             public void mouseDragged(MouseEvent e) {
                 int modifiersEx = e.getModifiersEx();
                 if (modifiersEx == MouseEvent.BUTTON1_DOWN_MASK) {
-                    dX = e.getX();
-                    dY = e.getY();
+                    x = e.getX();
+                    y = e.getY();
                     frame.repaint();
                 }
             }
@@ -93,7 +104,7 @@ public class ImgGUI {
     }
 
     public void init() {
-        frame.setSize(1600, 1000);
+        frame.setSize(800, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         // 添加画布
@@ -136,9 +147,10 @@ public class ImgGUI {
         if (directory != null && file != null) {
             File selectedFile = new File(directory, file);
             try {
-                image = ImageIO.read(selectedFile);
+                orgImg = ImageIO.read(selectedFile);
+                buffImg = buffImg1 = orgImg;
                 scale = 1.0;
-                dX = dY = 0;
+                x = y = 0;
                 frame.setTitle("Image Processing: " + selectedFile);
                 frame.repaint();
             } catch (IOException e) {
@@ -153,13 +165,16 @@ public class ImgGUI {
         if (fileDialog.getFile() != null) {
             String dir = fileDialog.getDirectory();
             String file = fileDialog.getFile();
-            File selectedFile = new File(dir, file);
             try {
-                ImageIO.write(buffImage, "png", selectedFile);
+                File selectedFile = new File(dir, file);
+                File selectedFile1 = new File(dir, "_" + file);
+                ImageIO.write(buffImg, "png", selectedFile);
+                System.out.println("Saving to: " + selectedFile.getAbsolutePath());
+                ImageIO.write(buffImg1, "png", selectedFile1);
+                System.out.println("Saving to: " + selectedFile1.getAbsolutePath());
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            System.out.println("Saving to: " + selectedFile.getAbsolutePath());
         }
     }
 
