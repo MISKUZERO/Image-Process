@@ -26,8 +26,12 @@ public class ImgGUI {
     private BufferedImage buffImg1;
     private double scale;
     private double preScale;
+    private int dx;
+    private int dy;
     private int x;
     private int y;
+    private static final int RENDER_WIDTH = 600;
+    private static final int RENDER_HEIGHT = 600;
     private static final double MIN_SCALE = 0.01;
     private static final double MAX_SCALE = 64;
     private static final double SCALE_STEP = 1.05;
@@ -51,8 +55,8 @@ public class ImgGUI {
                 preScale = scale;
                 int w = (int) (scale * orgImg.getWidth(null)), h = (int) (scale * orgImg.getHeight(null));
                 if (w != 0 && h != 0) {
-                    BufferedImage bImg = ImgGUI.this.buffImg = ImgScale.biLinearInterpolation(orgImg, w, h, 500, 500);
-                    BufferedImage cImg = ImgGUI.this.buffImg1 = ImgScale.castNNI(orgImg, w, h, 500, 500);
+                    BufferedImage bImg = ImgGUI.this.buffImg = ImgScale.biLinearInterpolation(orgImg, w, h, RENDER_WIDTH, RENDER_HEIGHT);
+                    BufferedImage cImg = ImgGUI.this.buffImg1 = ImgScale.castNNI(orgImg, w, h, RENDER_WIDTH, RENDER_HEIGHT);
                     g.drawImage(bImg, x, y, null);
                     g.drawImage(cImg, x + 1 + bImg.getWidth(), y, null);
                 }
@@ -78,6 +82,8 @@ public class ImgGUI {
             public void mousePressed(MouseEvent e) {
                 int modifiersEx = e.getModifiersEx();
                 if (modifiersEx == MouseEvent.BUTTON1_DOWN_MASK) {
+                    dx = e.getX() - x;
+                    dy = e.getY() - y;
                     frame.repaint();
                 }
             }
@@ -86,8 +92,8 @@ public class ImgGUI {
             public void mouseDragged(MouseEvent e) {
                 int modifiersEx = e.getModifiersEx();
                 if (modifiersEx == MouseEvent.BUTTON1_DOWN_MASK) {
-                    x = e.getX();
-                    y = e.getY();
+                    x = e.getX() - dx;
+                    y = e.getY() - dy;
                     frame.repaint();
                 }
             }
