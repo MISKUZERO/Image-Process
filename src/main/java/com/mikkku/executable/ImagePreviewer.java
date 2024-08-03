@@ -1,4 +1,6 @@
-package com.mikkku;
+package com.mikkku.executable;
+
+import com.mikkku.search.ImgSearcher;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -8,31 +10,34 @@ import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
+/**
+ * @author MiskuZero
+ * @date 2024/8/3 2:24
+ */
 public class ImagePreviewer extends JFrame {
 
-    private final List<String> imagePathList;
+    private final List<Object[]> imagePathSimilarityList;
     private final JPanel previewPanel;
     private int currentImageIndex;
 
-    private final int thumbnailWidth = 100;
-    private final int thumbnailHeight = 100;
+    private final int thumbnailWidth = 200;
+    private final int thumbnailHeight = 200;
 
     private static final int H_GAP = 1;
     private static final int V_GAP = 1;
 
-    public ImagePreviewer(List<String> imagePathList) {
-        this.imagePathList = imagePathList;
+    public ImagePreviewer(List<Object[]> imagePathSimilarityList) {
+        this.imagePathSimilarityList = imagePathSimilarityList;
         setTitle("Image Previewer");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         previewPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, H_GAP, V_GAP));
         int count = 5;//每行显示图片数
         int preferredWidth = count * (thumbnailWidth + H_GAP) + H_GAP;
-        int preferredHeight = (thumbnailHeight + V_GAP) * (int) Math.ceil((double) imagePathList.size() / count) + V_GAP;
+        int preferredHeight = (thumbnailHeight + V_GAP) * (int) Math.ceil((double) imagePathSimilarityList.size() / count) + V_GAP;
         previewPanel.setPreferredSize(new Dimension(preferredWidth, preferredHeight));
 
         JScrollPane scrollPane = new JScrollPane(previewPanel);
@@ -52,15 +57,37 @@ public class ImagePreviewer extends JFrame {
     }
 
     private void populatePreviewPanel() {
-        int size = imagePathList.size();
-        for (int i = 0; i != size; i++) {
-            String imagePath = imagePathList.get(i);
+        int i = 0;
+        for (Object[] objects : imagePathSimilarityList) {
+            File imagePath = (File) objects[1];
             try {
-                BufferedImage image = ImageIO.read(new File(imagePath));
+                BufferedImage image = ImageIO.read(imagePath);
                 BufferedImage thumbnail = createThumbnail(image);
-                JLabel label = new JLabel(new ImageIcon(thumbnail));
-                label.addMouseListener(new ThumbnailClickListener(image, i));
-                previewPanel.add(label);
+                JPanel panel = new JPanel(new GridBagLayout());
+                GridBagConstraints gbc = new GridBagConstraints();
+                // 创建图片标签
+                JLabel imageLabel = new JLabel(new ImageIcon(thumbnail));
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                gbc.gridwidth = 2; // 让图片占据两列
+                gbc.weightx = 1;
+                gbc.weighty = 1;
+                gbc.fill = GridBagConstraints.BOTH;
+                panel.add(imageLabel, gbc);
+                // 创建文本标签
+                JLabel textLabel = new JLabel(objects[0].toString(), JLabel.RIGHT);
+                gbc.gridx = 1;
+                gbc.gridy = 1;
+                gbc.gridwidth = 1;
+                gbc.weightx = 0;
+                gbc.weighty = 0;
+                gbc.anchor = GridBagConstraints.LINE_END;
+                gbc.fill = GridBagConstraints.NONE;
+                panel.add(textLabel, gbc);
+                // 设置容器的背景色，以便与图片区分开
+                panel.setBackground(Color.WHITE);
+                panel.addMouseListener(new ThumbnailClickListener(image, i++));
+                previewPanel.add(panel);
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(this, "Failed to load image: " + imagePath, "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -131,7 +158,7 @@ public class ImagePreviewer extends JFrame {
         });
 
         nextButton.addActionListener(e -> {
-            if (currentImageIndex < imagePathList.size() - 1) {
+            if (currentImageIndex < imagePathSimilarityList.size() - 1) {
                 currentImageIndex++;
                 updateImage();
             }
@@ -144,24 +171,25 @@ public class ImagePreviewer extends JFrame {
     }
 
     private void updateImage() {
+        File imagePath = (File) imagePathSimilarityList.get(currentImageIndex)[1];
         try {
-            BufferedImage image = ImageIO.read(new File(imagePathList.get(currentImageIndex)));
-            showOriginalImage(image);
+            showOriginalImage(ImageIO.read(imagePath));
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Failed to load image: " + imagePathList.get(currentImageIndex), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Failed to load image: " + imagePath, "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public static void main(String[] args) {
-        String path = "C:\\Users\\bx001\\Desktop";
-        String img = "C:\\Users\\bx001\\Desktop\\.trashed-1672458607-IMG_20221201_114947.jpg";
+        File path = new File("C:\\Users\\Administrator\\Desktop");
+        File imagePath = new File("C:\\Users\\Administrator\\Desktop\\bf5dfe57gy1hr5cujv6hyj22tc480hdw.jpg");
+        ImgSearcher imgSearch = new ImgSearcher();
+        List<Object[]> imagePathSimilarityList = new ArrayList<>();
         long t = System.currentTimeMillis();
-        Collection<String> search = ImgSearch.search(new File(path), new File(img));
+        imgSearch.search(path, imagePath, (similarity, image) -> {
+            System.out.println(similarity + ":" + image);
+            imagePathSimilarityList.add(new Object[]{similarity, image});
+        });
         System.out.println("time: " + (System.currentTimeMillis() - t) + "ms");
-        List<String> collect = search.stream().map(s -> {
-            System.out.println(s);
-            return s.substring(s.indexOf(':') + 2);
-        }).collect(Collectors.toList());
-        SwingUtilities.invokeLater(() -> new ImagePreviewer(collect));
+        SwingUtilities.invokeLater(() -> new ImagePreviewer(imagePathSimilarityList));
     }
 }

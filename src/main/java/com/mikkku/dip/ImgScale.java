@@ -1,5 +1,6 @@
 package com.mikkku.dip;
 
+
 import java.awt.image.BufferedImage;
 
 /**
@@ -46,6 +47,7 @@ public class ImgScale {
         return descBuffImg;
     }
 
+    @SuppressWarnings("all")
     public static BufferedImage fastBLI(BufferedImage srcImage, int w, int h, int limW, int limH) {
         int wb = Math.min(limW, w), hb = Math.min(limH, h);
         BufferedImage descBuffImg = new BufferedImage(wb, hb, srcImage.getType());
@@ -74,6 +76,7 @@ public class ImgScale {
         return descBuffImg;
     }
 
+    @SuppressWarnings("all")
     public static BufferedImage biLinearInterpolation(BufferedImage srcImage, int w, int h, int limW, int limH) {
         int wb = Math.min(limW, w), hb = Math.min(limH, h);
         BufferedImage descBuffImg = new BufferedImage(wb, hb, srcImage.getType());

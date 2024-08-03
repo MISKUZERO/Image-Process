@@ -1,7 +1,7 @@
 package com.mikkku;
 
 /**
- * @author wp
+ * @author MiskuZero
  * @date 2024/07/27/16:47
  */
 public class Test {

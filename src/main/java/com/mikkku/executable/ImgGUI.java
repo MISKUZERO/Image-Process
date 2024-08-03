@@ -1,4 +1,4 @@
-package com.mikkku;
+package com.mikkku.executable;
 
 import com.mikkku.dip.ImgScale;
 
