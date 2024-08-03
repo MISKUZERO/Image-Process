@@ -1,5 +1,7 @@
 package com.mikkku;
 
+import com.mikkku.util.FileUtils;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -11,7 +13,7 @@ import java.util.TreeSet;
 public class ImgSearch {
 
     private static final int PIXELS = 8;
-    private static final double SIMILARITY = 0.6;
+    private static final double SIMILARITY = 0.75;
     private static final int THRESHOLD = (int) (PIXELS * PIXELS * SIMILARITY);
 
     private static final byte[] GREYS = new byte[PIXELS * PIXELS];
@@ -21,24 +23,31 @@ public class ImgSearch {
     public static Collection<String> search(File directory, File img) {
         try {
             descHash = hash(ImageIO.read(img));
-            recursionSearch(directory);
         } catch (IOException ioException) {
-            ioException.printStackTrace();
+            System.err.println("无效的文件：" + img);
+            System.exit(1);
+        }
+        try {
+            FileUtils.recursionForeach(directory, (file -> {
+                if (isImageFile(file)) {
+                    double match = -1;
+                    try {
+                        match = match(hash(ImageIO.read(file)), descHash);
+                    } catch (Exception e) {
+                        System.err.println("无效的文件：" + file);
+                    }
+                    if (match != -1)
+                        RESULTS.add(match + ": " + file);
+                }
+            }));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(2);
         }
         return RESULTS;
     }
 
-    public static void recursionSearch(File directory) throws IOException {
-        File[] files = directory.listFiles();
-        if (files != null)
-            for (File file : files)
-                if (file.isDirectory())
-                    recursionSearch(file); // 递归处理子目录
-                else if (isImageFile(file))
-                    doSearch(file);
-    }
-
-    private static boolean isImageFile(File file) {
+    public static boolean isImageFile(File file) {
         String fileName = file.getName().toLowerCase();
         return fileName.endsWith(".jpg") ||
                 fileName.endsWith(".jpeg") ||
@@ -71,25 +80,14 @@ public class ImgSearch {
         return res;
     }
 
-    private static void doSearch(File curImg) {
-        double match = -1;
-        try {
-            match = match(hash(ImageIO.read(curImg)), descHash);
-        } catch (Exception e) {
-            System.err.println("无效的文件：" + curImg);
-        }
-        if (match != -1)
-            RESULTS.add(match + ": " + curImg);
-    }
-
     public static double match(long hash1, long hash2) {
+        long res = hash1 ^ hash2;
         int missCnt = 0, quitThreshold = PIXELS * PIXELS - THRESHOLD;
-        for (int i = 0; missCnt != quitThreshold && i != PIXELS * PIXELS; i++) {
-            long mask = 1L << i;
-            if ((hash1 & mask) != (hash2 & mask))
+        for (int i = 0; i != PIXELS * PIXELS; i++) {
+            if (((res >>> i) & 1) == 1)
                 missCnt++;
+            if (missCnt == quitThreshold) return -1;
         }
-        if (missCnt == quitThreshold) return -1;
         return (double) (PIXELS * PIXELS - missCnt) / (PIXELS * PIXELS);
     }
 
