@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.TreeSet;
 
 public class ImgSearch {
@@ -14,7 +15,7 @@ public class ImgSearch {
     private static final int THRESHOLD = (int) (PIXELS * PIXELS * SIMILARITY);
 
     private static final byte[] GREYS = new byte[PIXELS * PIXELS];
-    private static final TreeSet<String> RESULTS = new TreeSet<>();
+    private static final TreeSet<String> RESULTS = new TreeSet<>(Comparator.reverseOrder());
     private static long descHash;
 
     public static Collection<String> search(File directory, File img) {
